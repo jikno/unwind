@@ -18,7 +18,7 @@ Tailwindcss comes with a headache of configuration.  Three extra configs, an ext
 
 Compilers like Tailwindcss cannot understand complex runtime operations.  For example, the Tailwindcss compiler cannot effectively produce styles for an expression like this:
 
-```
+```html
 <div class="h-{size} w-{size}">
 ```
 
@@ -77,24 +77,143 @@ const map = aliasMap([
 ])
 ```
 
-Aliases are based on a system of variations, and groups of variations.
+#### Section
 
-A variation is a particular set of styles that are applied based on a that follow the 
-
-### Options
-
-Just because unwind is not a configuration headache does not mean that it is not customizable.  `setupUnwind` takes a `Theme` as an optional parameter.  All the values are optional.  `colors`, `spacing`, and `screens` default to the tailwind defaults.
+First, however, let's get the term "section" sorted out.  A list of sections is the result of splitting a class name on the dashes.
 
 ```ts
-setupUnwind({
-	colors // A 
+"class-name".split("-") // sections are "class", and "name"
+```
+
+#### Matching
+
+A simple alias is quite simple.  It has some styles that will substitute the name in a class list.
+
+```ts
+alias('alias-name', 'base-styles to-apply')
+
+// the above code can also be written as...
+
+alias('alias-name', {
+	base: 'base-styles to-apply',
 })
 ```
 
-TODO:
-- readme
-- (done) selling point: like tailwind except it unwinds you from the headaches of configuration that goes along with it
-- docs
-- repo
-- aliases -> aliasMap
-- (done) plugins -> aliases
+Each alias has a name, and a set of base styles that will be applied if that alias is matched.  A class that matches an alias' name will be matched to that alias.  If no matches are found, the last section of the class name is removed and stashed and an alias is looked up again.  This process is repeated until a match is found or until all sections have been removed.
+
+```html
+<!-- These classes all match the alias "alias-name" defined in the last example -->
+<div class="alias-name alias-name-foo-bar alias-name-foo-bar-baz" />
+
+<!-- And after the alias defined above is matched, the classes will resolve to the following -->
+<div class="base-styles to-apply base-styles to-apply base-styles to-apply" />
+```
+
+#### Variations
+
+Aliases, however, are not just simple matchers.  They include a functionality called variations.  A particular variation of an alias can be selected by adding extra sections to the end of the alias name.  These sections are stashed during the matching process, but are then passed back to the alias so that it can apply the correct variations.
+
+Here is an example.  This alias is called `alias-name` and has three variations: `foo`, `bar`, and `baz`.
+
+```ts
+alias('alias-name', {
+	base: 'base-styles to-apply',
+	variations: [
+		[
+			{ key: 'foo', style: 'apply-foo' },
+			{ key: 'bar', style: 'apply-bar' },
+			{ key: 'baz', style: 'apply-baz' },
+		]
+	]
+})
+```
+
+Given an input of these classes...
+
+```html
+<div class="alias-name alias-name-foo-bar alias-name-foo-bar-baz" />
+```
+
+... the alias would resolve:
+- `alias-name` to the base styles of that alias: `base-styles to-apply`.
+- `alias-name-foo-bar` would resolve to the base styles, plus the `foo` variation, plus the `bar` variation: `base-styles to-apply apply-foo apply-bar`
+- `alias-name-foo-bar-baz` would resolve to the base styles, plus the `foo` variation, plus the `bar` variation, plus the `baz` variation: `base-styles to-apply apply-foo apply-bar apply-baz`
+
+#### Variation Grouping and Defaults
+
+In the above example, you may have been wondering why you must nest an array inside an array to define groups.  The answer is simple.  It is because variations are applied in groups.  Lets say you have want to ship the following css classes.
+
+`btn`, `btn-primary`, `btn-spacious`, and `btn-primary-spacious`.
+
+The `btn` class should be the default button, grey, and with a cozy amount of padding around it.  The `btn-primary` class should be the default button with a blue color.  The `btn-spacious` class should be the default button with extra padding inside it.  The `btn-primary-spacious` should be the default button with both a blur color and extra padding inside it.
+
+This type of is tricky to pull off with variations in the way that we have explained so far.  For example, you don't want to apply the "cozy padding" if the variation matched was "spacious".  Css doesn't have an order in the class list, so it would be a hit-miss gamble with which type of padding would win if you applied both types of padding.  This is why we have groups and defaults.
+
+The padding-related variations can be in group, and the color-related variations can be in a group.  Additionally, each of the groups can have a default variation.
+
+```ts
+alias('btn', {
+	base: '...',
+	variations: [
+		// Color-related variations
+		[
+			{ key: 'gray', style: 'bg-gray', isDefault: true },
+			{ key: 'primary', style: 'bg-primary' },
+		],
+		// Padding-related variations
+		[
+			{ key: 'cozy', style: 'p-2', isDefault: true },
+			{ key: 'spacious', style: 'p-4' },
+		]
+	]
+})
+```
+
+In this example, if the "primary" variation doesn't match, the "gray" one will because it is the default for that group.  Likewise, if the "spacious" variation does not match, the "cozy" one will.
+
+If you do not want the default variation to be accessible in any way other than default, you can set the `key` to `null`.
+
+```ts
+[
+	{ key: null, style: 'p-2', isDefault: true },
+	{ key: 'spacious', style: 'p-4' },
+]
+```
+
+#### Recursive Behavior
+
+Aliases can reference each other, even in a recursive fashion.  If the exact same styles are applied twice, the match will not apply the style a second time and a warning will be written to the console.
+
+```ts
+// Aliases can reference each other
+alias('foo', 'bar')
+alias('bar', 'baz-foo')
+
+// Even if the reference is recursive
+alias('baz', {
+	base: '...',
+	variations: [
+		[
+			{ key: 'foo', style: 'baz-bar' },
+			{ key: 'bar', style: 'wow-i-was-referenced-recursively' },
+		]
+	]
+})
+```
+
+#### Complex Alias Matching
+
+If you want full control over how variation matching is done, and possibly even use variations as parameters, you can do so.  Simply supply a function to `alias` instead of an object.  If the function returns `null`, the alias match will be canceled and the program will search for another match.
+
+```ts
+alias('size', sections => {
+	const size = sections[0]
+	if (!size) return null // don't match this alias
+
+	return `w-${size} h-${size}`
+})
+```
+
+## Compiler Usage
+
+Generally these functions are not accessed directly.  Bundler plugins and frameworks are meant to run the compiler.
