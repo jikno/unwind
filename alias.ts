@@ -111,13 +111,18 @@ export function alias(name: string, params: AliasParams | string | AliasFn): Ali
 				if (!variation.key) continue
 
 				// The variation key should match a "part"
-				if (!parts.includes(variation.key)) continue
+				const partsWithoutMatch = removeAndRecreateArray(parts, variation.key)
+				if (!partsWithoutMatch) continue
+
+				// A match was found
+				// Remove this section from the "parts" because it was used
+				parts = partsWithoutMatch
 
 				// And because it did...
 				// If a variation was already applied, warn and skip to the next variation
 				if (variationApplied) {
 					console.warn(
-						`The variation "${variation.key}" of alias "${name}" was not matched because a variation from that same group, "${variationApplied}", already matched.`
+						`The variation "${variation.key}" of alias "${name}" was not matched because a variation from that same group, "${variationApplied}", already matched`
 					)
 					continue
 				}
@@ -138,6 +143,9 @@ export function alias(name: string, params: AliasParams | string | AliasFn): Ali
 			baseSections.push(defaultVariationStyle)
 		}
 
+		// Warn for every unused part
+		for (const unused of parts) console.warn(`The "${unused}" section of alias "${name}" did not match a variation`)
+
 		return joinClassSections(baseSections)
 	}
 
@@ -150,4 +158,12 @@ function splitClasses(classes: string) {
 
 function joinClassSections(sections: string[]) {
 	return sections.join(' ')
+}
+
+/** Returns a new array if without `item`.  If `item` does not exist in `array`, returns null */
+function removeAndRecreateArray<T>(array: T[], item: T): T[] | null {
+	const index = array.indexOf(item)
+	if (!~index) return null
+
+	return [...array.slice(0, index), ...array.slice(index + 1)]
 }
