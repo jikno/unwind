@@ -64,7 +64,7 @@ export function insertUnwindImport(markup: string, version: string, options: Ins
 	}
 
 	function buildImport() {
-		const path = options.path || 'https://code.jikno.com/unwind@VERSION/unwind.ts'
+		const path = options.path || 'https://code.jikno.com/unwind@VERSION/runtime-caller.ts'
 		const versionedPath = path.replace('VERSION', version)
 
 		return `\timport { ${options.exportName || 'unwind'} as ${options.nameAs || '__unwind'} } from '${versionedPath}'`
