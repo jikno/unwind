@@ -10,6 +10,13 @@ export function lookup(map: AliasMap, classes: string): string {
 		const style = findLongestAliasMatch(className, map, [])
 		if (!style) return className
 
+		// If the matched style is identical to the initial input, we are on the roll to create an infinite loop
+		// Halt it
+		if (style === classes) {
+			console.warn(`Halted an infinite recursion: "${className}" resolved to "${style}"`)
+			return style
+		}
+
 		return lookup(map, style)
 	})
 

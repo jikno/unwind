@@ -132,3 +132,15 @@ Deno.test({
 		assertEquals(lookup(map, input), output)
 	},
 })
+
+Deno.test({
+	name: '[alias] should not allow infinitely recursive resolutions',
+	fn() {
+		const map = aliasMap([alias('btn', 'btn')])
+
+		const input = 'btn red'
+		const output = 'btn red'
+
+		assertEquals(lookup(map, input), output)
+	},
+})
