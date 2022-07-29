@@ -21,7 +21,7 @@ export interface InsertUnwindImportOptions {
 	/**
 	 * If true, lang="ts" attribute tags will not be added to
 	 */
-	disableTypescript?: boolean
+	noTsScripts?: boolean
 }
 
 export function insertUnwindImport(markup: string, version: string, options: InsertUnwindImportOptions = {}) {
@@ -53,8 +53,12 @@ export function insertUnwindImport(markup: string, version: string, options: Ins
 	// If the start script was found, the import now be in the lines array
 	return lines.join('\n')
 
+	//
+	// Helpers
+	//
+
 	function buildScriptTag() {
-		if (options.disableTypescript) return `<script>`
+		if (options.noTsScripts) return `<script>`
 
 		return `<script lang="ts">`
 	}

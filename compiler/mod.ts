@@ -1,7 +1,7 @@
 import { insertUnwindImport, InsertUnwindImportOptions } from './insert.ts'
 import { wrapTemplateClasses } from './wrap.ts'
 
-export interface ImplementUnwindOptions extends InsertUnwindImportOptions {
+export interface InsertUnwindHooks extends InsertUnwindImportOptions {
 	/**
 	 * The version of unwind that you want to use.
 	 * Defaults to the current version of this compiler, but the versions don't have to be the same
@@ -13,7 +13,7 @@ export interface ImplementUnwindOptions extends InsertUnwindImportOptions {
  * Preprocesses htmlx/Svelte to include support for unwind.  This is done by wrapping
  * every class attribute in a call to the unwind runtime.
  */
-export function implementUnwind(markup: string, options: ImplementUnwindOptions) {
+export function insertUnwindHooks(markup: string, options: InsertUnwindHooks) {
 	const version = extractVersion(import.meta.url) || 'master'
 	const markupWithScript = insertUnwindImport(markup, version, options)
 

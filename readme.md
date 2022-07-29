@@ -4,6 +4,9 @@ Elegant tailwind support for Svelte and other Htmlx-style templates via the Deno
 
 Get all the benefits of tailwindcss (+ some :wink:) while at the same time, unwinding yourself from all the configuration headaches that go along with it.
 
+# TODO
+- Tests for alias system
+
 ## Another Tailwind Project??
 
 This project is similar to both [Twind](https://twind.dev) and the official [Tailwind CSS](https://tailwindcss.com).  It is similar to Tailwindcss in that it has a compilation step, it is similar to Twind in that it evaluates classes at runtime.
@@ -36,7 +39,7 @@ That doesn't seem like such a missive deal for just one line, but over scores of
 
 ### The Solution
 
-Unwind functions in two steps.  A compile step wraps the value of all class attributes in a call to `unwind`, and the runtime function, `unwind`, parses the class names it receives into css and writes that css to the document head using Twind.
+Unwind functions in two steps.  A compile step wraps the value of all class attributes in a call to `unwind`, and the runtime caller function, `unwind`, parses the class names it receives into css and writes that css to the document head using Twind.
 
 The whole solution is simple, fast, and efficient.  This project integrates nicely into the Deno ecosystem, but since it is just plain ESM, it will run just about anywhere.
 
@@ -216,4 +219,44 @@ alias('size', sections => {
 
 ## Compiler Usage
 
-Generally these functions are not accessed directly.  Bundler plugins and frameworks are meant to run the compiler.
+> Note: If you are using [Sab](https://github.com/jikno/sab), this compilation is done automatically.
+
+Unwind works by inserting calls to the Unwind runtime throughout Htmlx/Svelte templates prior to those particular compilations.
+
+The function inserted into the htmlx/Svelte is called a runtime caller function.  It calls the current unwind runtime initialized by the `setupUnwind` function.  This function does not have to be from the same version (or even codebase) as the rest of the runtime.
+
+The runtime caller function lives in [runtime-caller.ts](./runtime-caller.ts).
+
+> Note: All options are optional
+
+```ts
+import { insertUnwindHooks } from 'https://code.jikno.com/unwind/compiler/mod.ts'
+
+const htmlxSvelteWithUnwindRuntimeHooks = insertUnwindHooks(htmlxSvelteCode, {
+	// The version of Unwind to use.  Defaults to the version of the compiler.
+	// Note: Does not have to be the same version as the version of Unwind that setupUnwind is imported from
+	version: '1.2.3',
+
+	// The name to import the unwind function as
+	// Can be useful if you need to avoid a naming conflict
+	nameAs: 'customName', // Defaults to "__unwind"
+
+	// Do not automatically add lang="ts" to script tags automatically generated when adding imports to files
+	// without a preexisting script tag
+	noTsScripts: true
+
+	// Used for modifying the runtime caller to use
+	exportName, // Import an exported name other than unwind
+	path // Use a different path for the installation of the runtime.  Note: If this path contains the text "VERSION", that text will be replaces with the value of the `version` option above.
+})
+```
+
+## Contributing
+
+Heck yeah!
+
+```shell
+git clone https://github.com/jikno/unwind
+cd unwind
+deno test
+```
