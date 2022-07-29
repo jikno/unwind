@@ -253,5 +253,5 @@ Heck yeah!
 ```shell
 git clone https://github.com/jikno/unwind
 cd unwind
-deno test
+deno test --watch .
 ```
