@@ -6,7 +6,7 @@ export interface InsertUnwindHooks extends InsertUnwindImportOptions {
 	 * The version of unwind that you want to use.
 	 * Defaults to the current version of this compiler, but the versions don't have to be the same
 	 */
-	version: string
+	version?: string
 }
 
 /**
