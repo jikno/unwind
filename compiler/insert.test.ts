@@ -20,7 +20,7 @@ Deno.test({
 </script>
 
 <script>
-	import { __unwind } from 'path'
+	import { unwind as __unwind } from 'path'
 	let name = 'World!'
 </script>
 `
@@ -40,7 +40,7 @@ Deno.test({
 
 		const expected = `\
 <script lang="ts">
-	import { __unwind } from 'path'
+	import { unwind as __unwind } from 'path'
 </script>
 
 <div class="flex items-center">

@@ -4,9 +4,6 @@ Elegant tailwind support for Svelte and other Htmlx-style templates via the Deno
 
 Get all the benefits of tailwindcss (+ some :wink:) while at the same time, unwinding yourself from all the configuration headaches that go along with it.
 
-# TODO
-- Tests for alias system
-
 ## Another Tailwind Project??
 
 This project is similar to both [Twind](https://twind.dev) and the official [Tailwind CSS](https://tailwindcss.com).  It is similar to Tailwindcss in that it has a compilation step, it is similar to Twind in that it evaluates classes at runtime.
@@ -122,11 +119,9 @@ Here is an example.  This alias is called `alias-name` and has three variations:
 alias('alias-name', {
 	base: 'base-styles to-apply',
 	variations: [
-		[
-			{ key: 'foo', style: 'apply-foo' },
-			{ key: 'bar', style: 'apply-bar' },
-			{ key: 'baz', style: 'apply-baz' },
-		]
+		[{ key: 'foo', style: 'apply-foo' }],
+		[{ key: 'bar', style: 'apply-bar' }],
+		[{ key: 'baz', style: 'apply-baz' }],
 	]
 })
 ```
@@ -194,7 +189,7 @@ alias('bar', 'baz-foo')
 
 // Even if the reference is recursive
 alias('baz', {
-	base: '...',
+	base: null, // and yes, an alias can have a null base :D
 	variations: [
 		[
 			{ key: 'foo', style: 'baz-bar' },

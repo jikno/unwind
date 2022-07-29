@@ -1,5 +1,5 @@
 export type Alias = { name: string; fn: AliasFn }
-export type AliasFn = (parts: string[]) => string
+export type AliasFn = (parts: string[]) => string | null
 export type AliasMap = Map<string, AliasFn>
 
 /**
@@ -7,18 +7,26 @@ export type AliasMap = Map<string, AliasFn>
  */
 export function lookup(map: AliasMap, classes: string): string {
 	const sections = splitClasses(classes).map(className => {
-		const match = findLongestAliasMatch(className, map, [])
-		if (!match) return className
+		const style = findLongestAliasMatch(className, map, [])
+		if (!style) return className
 
-		return lookup(map, match.alias(match.parts))
+		return lookup(map, style)
 	})
 
 	return joinClassSections(sections)
 }
 
-function findLongestAliasMatch(name: string, map: AliasMap, parts: string[]): { alias: AliasFn; parts: string[] } | null {
-	if (map.has(name)) return { alias: map.get(name)!, parts }
+/** Looks up an alias in an aliasMap and return it's result if it matches */
+function findLongestAliasMatch(name: string, map: AliasMap, parts: string[]): string | null {
+	// If the map has this plugin and it returns a style, resolve with the style
+	if (map.has(name)) {
+		const alias = map.get(name)!
 
+		const style = alias(parts)
+		if (style) return style
+	}
+
+	// Otherwise, keep looking
 	const extraction = extractLastPart(name)
 	if (!extraction) return null
 
@@ -36,12 +44,12 @@ function extractLastPart(name: string) {
 }
 
 export interface AliasVariation {
-	key: string
+	key: string | null
 	style: string
 	isDefault?: boolean
 }
 export interface AliasParams {
-	base: string
+	base: string | null
 	variations?: AliasVariation[][]
 }
 
@@ -69,28 +77,58 @@ export function aliasMap(aliases: Alias[]): AliasMap {
 /**
  * Creates an alias
  */
-export function alias(name: string, params: AliasParams): Alias {
+export function alias(name: string, params: AliasParams | string | AliasFn): Alias {
+	if (typeof params === 'function') return { name, fn: params }
+
 	const fn: AliasFn = parts => {
-		const baseSections = [params.base]
+		// Get the parameter values
+		const base = typeof params === 'string' ? params : params.base
+		const variationGroups = typeof params === 'string' || !params.variations ? [] : params.variations
 
-		if (!params.variations) return baseSections.join(' ')
+		// Create an array for the base sections (to be added to by the variations that match)
+		const baseSections = base ? [base] : []
 
-		for (const group of params.variations) {
-			let variationApplied = false
+		// Loop through each variation
+		for (const group of variationGroups) {
+			// We need to remember if a variation was matched so that we can be sure not to match a variation from
+			// the same group twice and can be sure to apply any group defaults if no variation matched
+			let variationApplied: string | null = null
+			let defaultVariationStyle: string | null = null
 
+			// Check each variation of this group to see if any of them match
 			for (const variation of group) {
+				// First of all, while we are at the process of looping through variations, set the default variation
+				if (variation.isDefault) defaultVariationStyle = variation.style
+
+				// If the variation key is null, it is not meant to be consumed "publicly"
+				if (!variation.key) continue
+
+				// The variation key should match a "part"
 				if (!parts.includes(variation.key)) continue
 
-				variationApplied = true
+				// And because it did...
+				// If a variation was already applied, warn and skip to the next variation
+				if (variationApplied) {
+					console.warn(
+						`The variation "${variation.key}" of alias "${name}" was not matched because a variation from that same group, "${variationApplied}", already matched.`
+					)
+					continue
+				}
+
+				// Remember that it did
+				variationApplied = variation.key
+				// And add this variation's styles to the base sections
 				baseSections.push(variation.style)
 			}
 
+			// If a variation was applied, skip to the next group
 			if (variationApplied) continue
 
-			const defaultVariation = group.find(g => g.isDefault)
-			if (!defaultVariation) continue
+			// If this group does not have a default variation, skip to the next group
+			if (!defaultVariationStyle) continue
 
-			baseSections.push(defaultVariation.style)
+			// Default style found!  Add it to the base sections
+			baseSections.push(defaultVariationStyle)
 		}
 
 		return joinClassSections(baseSections)
