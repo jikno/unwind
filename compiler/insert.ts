@@ -13,7 +13,7 @@ export interface InsertUnwindImportOptions {
 	exportName?: string
 
 	/**
-	 * The path to the location of the unwind runtime.  Defaults to https://code.jikno.com/unwind@VERSION/unwind.ts
+	 * The path to the location of the unwind runtime.  Defaults to https://code.jikno.com/unwind@VERSION/runtime-caller.ts
 	 * If this string contains the text "VERSION", it will be replaced by the `version` argument
 	 */
 	path?: string
