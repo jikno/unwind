@@ -28,7 +28,10 @@ Deno.test({
 
 			{#if imagePath}
 				<div
-					class="mx-auto w-200 h-200 rounded-full border-2 boder-red bg-center bg-cover bg-no-repeat"
+					class="
+						mx-auto w-200 h-200 rounded-full border-2
+						border-red bg-center bg-cover bg-no-repeat
+					"
 					style="background-image: url('{imagePath}')"
 				/>
 
@@ -66,7 +69,10 @@ Deno.test({
 
 			{#if imagePath}
 				<div
-					class={someFn(\`mx-auto w-200 h-200 rounded-full border-2 boder-red bg-center bg-cover bg-no-repeat\`)}
+					class={someFn(\`
+						mx-auto w-200 h-200 rounded-full border-2
+						border-red bg-center bg-cover bg-no-repeat
+					\`)}
 					style="background-image: url('{imagePath}')"
 				/>
 

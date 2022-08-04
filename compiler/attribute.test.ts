@@ -47,3 +47,20 @@ Deno.test({
 		})
 	},
 })
+
+Deno.test({
+	name: '[attribute] newlines should work',
+	fn() {
+		test(
+			`"
+				Hi there!
+			"/> this and that`,
+			{
+				length: 20,
+				jsString: `\`
+				Hi there!
+			\``,
+			}
+		)
+	},
+})
