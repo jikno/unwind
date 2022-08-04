@@ -153,7 +153,7 @@ export function alias(name: string, params: AliasParams | string | AliasFn): Ali
 }
 
 function splitClasses(classes: string) {
-	return classes.split(/ +/)
+	return classes.trim().split(/\s+/)
 }
 
 function joinClassSections(sections: string[]) {

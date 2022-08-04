@@ -14,6 +14,20 @@ Deno.test({
 })
 
 Deno.test({
+	name: '[alias] should substitute classes with newlines',
+	fn() {
+		const map = aliasMap([alias('alias-name', 'base-styles to-apply')])
+
+		const input = `
+			alias-name
+			alias-name-foo-bar alias-name-foo-bar-baz`
+		const output = 'base-styles to-apply base-styles to-apply base-styles to-apply'
+
+		assertEquals(lookup(map, input), output)
+	},
+})
+
+Deno.test({
 	name: '[alias] should apply variations',
 	fn() {
 		const map = aliasMap([
