@@ -64,3 +64,10 @@ Deno.test({
 		)
 	},
 })
+
+Deno.test({
+	name: '[attribute] embedded expressions should work',
+	fn() {
+		test(`{hello} man that />`, { length: 7, jsString: '`${hello}`' })
+	},
+})

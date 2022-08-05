@@ -205,7 +205,9 @@ export function attributeToTemplateLiteral(string: string): AttributeToTemplateL
 
 	// Ok, now that we are done with the loop and we have consumed all that we would need to, we need to finish off the
 	// JS template literal we have started.
-	if (topLevelStrategy === 'quoted') jsString += '`'
+	// But we don't want to any closing brace to the {expression} attributes.  That closing bracket was already added when the
+	// expression finished
+	if (topLevelStrategy === 'quoted' || topLevelStrategy === 'none') jsString += '`'
 	else jsString += '}`'
 
 	return { originalAttributeLength: consumed, jsString }
